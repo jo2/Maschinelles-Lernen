@@ -5,38 +5,39 @@ from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog
+from detectron2.data import DatasetCatalog
 import cv2
 import requests
+import random
 import numpy as np
-from detectron2.data.datasets import register_coco_instances
+import json
 
-def get_dicts:
-    return
+def get_dicts():
+    with open('dataset.json') as json_file:
+        data = json.load(json_file)
+    return data
 
-DatasetCatalog.register("my_dataset", get_dicts)
+DatasetCatalog.register("can_train", get_dicts)
+# DatasetCatalog.register("can_val", get_dicts)
+MetadataCatalog.get("can_train").set(thing_classes=["Sticker", "Edding", "Verschmutzung"])
+# MetadataCatalog.get("can_val").set(thing_classes=["Sticker", "Edding", "Verschmutzung"])
+can_metadata = MetadataCatalog.get("can_train")
 
-# register_coco_instances("cans", {}, "/dataset.json", "/img")
+dataset_dicts = get_dicts()
 
-can_metadata = MetadataCatalog.get("cans")
+cfg = get_cfg()
+# below path applies to current installation location of Detectron2
+cfgFile = "/usr/local/lib/python3.8/site-packages/detectron2/model_zoo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml"
+cfg.merge_from_file(cfgFile)
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
+cfg.MODEL.WEIGHTS = "detectron2://COCO-Detection/faster_rcnn_R_101_FPN_3x/137851257/model_final_f6e8b1.pkl"
+cfg.MODEL.DEVICE = "cpu" # we use a CPU Detectron copy
 
-img = cv2.imread('A_01_03_06_2019315_175644.png')
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set the testing threshold for this model
+cfg.DATASETS.TEST = ("can_val", )
+predictor = DefaultPredictor(cfg)
 
-visualizer = Visualizer(img[:, :, ::-1], metadata=can_metadata, scale=0.5)
-vis = visualizer.draw_dataset_dict({
-    "id": 3715,
-    "dataset_id": 1,
-    "category_ids": [],
-    "path": "/datasets/Can-Check/A_01_03_06_2019315_175644.png",
-    "width": 1100,
-    "height": 657,
-    "file_name": "A_01_03_06_2019315_175644.png",
-    "annotated": false,
-    "annotating": [],
-    "num_annotations": 0,
-    "metadata": {},
-    "deleted": false,
-    "milliseconds": 0,
-    "events": [],
-    "regenerate_thumbnail": false
-})
-cv2_imshow(vis.get_image()[:, :, ::-1])
+im = cv2.imread('/test/A_01_03_06_2019315_175348.png')
+# make prediction
+output = predictor(im)
+print(output)
