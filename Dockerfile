@@ -16,9 +16,11 @@ RUN python -m pip install detectron2==0.1.1 -f https://dl.fbaipublicfiles.com/de
 # Development packages
 RUN pip install flask flask-cors requests opencv-python
 
-ADD init.py /
 ADD img /img
 ADD test /test
 ADD dataset.json /
+ADD init.py /
+ADD webapi.py /
 
 #CMD [ "python", "/init.py" ]
+ENTRYPOINT ["python", "webapi.py"]

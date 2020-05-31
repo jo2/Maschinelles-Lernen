@@ -27,6 +27,7 @@ dataset_dicts = get_dicts()
 
 cfg = get_cfg()
 # below path applies to current installation location of Detectron2
+# TODO create own config
 cfgFile = "/usr/local/lib/python3.8/site-packages/detectron2/model_zoo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml"
 cfg.merge_from_file(cfgFile)
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
