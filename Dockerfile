@@ -18,7 +18,11 @@ RUN pip install flask flask-cors requests opencv-python
 
 #ADD volume /
 ADD vovnet /vovnet/
+ADD centermask /centermask/
 ADD init.py /
 ADD webapi.py /
+ADD train_net.py /
 
-ENTRYPOINT ["python", "init.py"]
+#ENTRYPOINT ["python", "init.py"]
+#ENTRYPOINT ["python", "train_net.py"]
+# python train_net.py --eval-only MODEL.WEIGHTS /volume/configs/centermask2-V-39-eSE-FPN-ms-3x.pth

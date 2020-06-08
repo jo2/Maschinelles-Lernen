@@ -1,0 +1,22 @@
+VERSION: 2
+_BASE_: "centermask_V_39_eSE_FPN_ms_3x.yaml"
+MODEL:
+  META_ARCHITECTURE: "GeneralizedRCNN"
+#  ROI_KEYPOINT_HEAD:
+#    NUM_KEYPOINTS:
+#  WEIGHTS: "/output/centermask/CenterMask-V-39-ms-3x/model_final.pth"
+  DEVICE: "cpu"
+  RPN:
+    BATCH_SIZE_PER_IMAGE: 256
+  ROI_HEADS:
+    BATCH_SIZE_PER_IMAGE: 128
+    NUM_CLASSES: 3
+DATASETS:
+  TRAIN: ("can_train",)
+  TEST: ("can_val",)
+SOLVER:
+  CHECKPOINT_PERIOD: 100
+  IMS_PER_BATCH: 1
+  BASE_LR: 0.01  # Note that RetinaNet uses a different default learning rate
+  STEPS: (6, 8)
+  MAX_ITER: 30

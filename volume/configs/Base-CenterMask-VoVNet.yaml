@@ -8,25 +8,23 @@ MODEL:
   FPN:
     IN_FEATURES: ["stage3", "stage4", "stage5"]
   PROPOSAL_GENERATOR:
-    NAME: "RPN"
-    MIN_SIZE: 0
-#    NAME: "FCOS"
-#  FCOS:
-#    POST_NMS_TOPK_TEST: 50
+    NAME: "FCOS"  
+  FCOS:
+    POST_NMS_TOPK_TEST: 50
   # PIXEL_MEAN: [102.9801, 115.9465, 122.7717]
   MASK_ON: True
-#  MASKIOU_ON: True
+  MASKIOU_ON: True
   ROI_HEADS:
     NAME: "CenterROIHeads"
     IN_FEATURES: ["p3", "p4", "p5"]
-#  ROI_MASK_HEAD:
-#    NAME: "SpatialAttentionMaskHead"
-#    ASSIGN_CRITERION: "ratio"
-#    NUM_CONV: 4
-#    POOLER_RESOLUTION: 14
+  ROI_MASK_HEAD:
+    NAME: "SpatialAttentionMaskHead"
+    ASSIGN_CRITERION: "ratio"
+    NUM_CONV: 4
+    POOLER_RESOLUTION: 14
 DATASETS:
-  TRAIN: ("can_train",)
-  TEST: ("can_val",)
+  TRAIN: ("coco_2017_train",)
+  TEST: ("coco_2017_val",)
 SOLVER:
   CHECKPOINT_PERIOD: 10000
   IMS_PER_BATCH: 16

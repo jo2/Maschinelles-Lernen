@@ -12,10 +12,7 @@ import os
 from vovnet import add_vovnet_config
 
 from detectron2.data.datasets import register_coco_instances
-
 import torch
-torch.cuda.is_available()
-print(torch.cuda.is_available())
 
 def get_dicts():
     with open('/volume/dataset.json') as json_file:
@@ -32,6 +29,13 @@ def clear_folder(folder):
                 shutil.rmtree(file_path)
         except Exception as e:
             print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+if not os.path.exists('/volume/processed'):
+    os.makedirs('/volume/processed')
+
+if not os.path.exists('/volume/evaluated'):
+    os.makedirs('/volume/evaluated')
+os.chdir('/')
 
 clear_folder("/volume/processed")
 clear_folder("/volume/evaluated")
@@ -50,19 +54,24 @@ for d in random.sample(dataset_dicts, 3):
     cv2.imwrite("/volume/processed/" + d["file_name"][12:], processedImg)
 
 cfg = get_cfg()
-add_vovnet_config(cfg)
-cfg.merge_from_file("/volume/configs/centermask_V_39_eSE_FPN_ms_3x.yaml")
-# cfg.merge_from_file("/usr/local/lib/python3.8/site-packages/detectron2/model_zoo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml")
+cfg.merge_from_file('/volume/configs/config.yaml')
 cfg.DATASETS.TRAIN = ("can_train")
-cfg.DATASETS.TEST = ()  # no metrics implemented for this dataset
-cfg.DATALOADER.NUM_WORKERS = 1
-cfg.MODEL.WEIGHTS = "detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x/137849600/model_final_f10217.pkl"
-cfg.SOLVER.IMS_PER_BATCH = 2
-cfg.SOLVER.BASE_LR = 0.02
-cfg.MODEL.DEVICE = "cpu"
-cfg.SOLVER.MAX_ITER = (30)  # 300 iterations seems good enough, but you can certainly train longer
-cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = (128)  # faster, and good enough for this toy dataset
-cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3  # 3 classes (data, fig, hazelnut)
+
+# add_vovnet_config(cfg)
+# cfg.merge_from_file("/volume/configs/centermask_V_39_eSE_FPN_ms_3x.yaml")
+# cfg.merge_from_file("/usr/local/lib/python3.8/site-packages/detectron2/model_zoo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml")
+# cfg.DATASETS.TRAIN = ("can_train")
+# cfg.DATASETS.TEST = ()  # no metrics implemented for this dataset
+# cfg.DATALOADER.NUM_WORKERS = 1
+# cfg.MODEL.WEIGHTS = "detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x/137849600/model_final_f10217.pkl"
+# cfg.SOLVER.IMS_PER_BATCH = 2
+# cfg.SOLVER.BASE_LR = 0.02
+# cfg.MODEL.DEVICE = "cpu"
+# cfg.SOLVER.MAX_ITER = (30)  # 300 iterations seems good enough, but you can certainly train longer
+# cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = (128)  # faster, and good enough for this toy dataset
+# cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3  # 3 classes (data, fig, hazelnut)
+
+print(cfg.dump())
 
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 trainer = DefaultTrainer(cfg)
