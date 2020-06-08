@@ -181,7 +181,7 @@ def setup(args):
     cfg.merge_from_list(args.opts)
     print('start setup')
     cfg.MODEL.DEVICE = "cpu"
-    cfg.freeze()
+    # cfg.freeze()
     default_setup(cfg, args)
     print('finish setup')
     return cfg
@@ -189,6 +189,7 @@ def setup(args):
 
 def main(args):
     cfg = setup(args)
+
 
     register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/img")
     register_coco_instances("can_val", {}, "/volume/dataset.json", "/volume/img")
@@ -200,16 +201,17 @@ def main(args):
         trainer.register_hooks(
             [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
         )
-    print('start training')
-    train_result = trainer.train()
-    print(train_result)
+    # print('start training')
+    trainer.train()
+    # print(train_result)
 
-    cfg.dump()
-    print(cfg.dump())
+    cfg.MODEL.WEIGHTS = '/output/centermask/CenterMask-V-39-ms-3x/model_final.pth'
+    # cfg.dump()
+    # print(cfg.dump())
     model = Trainer.build_model(cfg)
     AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-        # cfg.MODEL.WEIGHTS, resume=args.resume
-        '/output/centermask/CenterMask-V-39-ms-3x/model_final.pth', resume=args.resume
+        cfg.MODEL.WEIGHTS, resume=args.resume
+        # '/output/centermask/CenterMask-V-39-ms-3x/model_final.pth', resume=args.resume
     )
     evaluators = [
         Trainer.build_evaluator(cfg, name)
