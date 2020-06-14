@@ -170,49 +170,23 @@ class Trainer(DefaultTrainer):
         res = OrderedDict({k + "_TTA": v for k, v in res.items()})
         return res
 
-
-def setup(args):
-    """
-    Create configs and perform basic setups.
-    """
-    cfg = get_cfg()
-    # cfg.merge_from_file(args.config_file)
-    cfg.merge_from_file('/volume/configs/config.yaml')
-    cfg.merge_from_list(args.opts)
-    print('start setup')
-    cfg.MODEL.DEVICE = "cpu"
-    # cfg.freeze()
-    default_setup(cfg, args)
-    print('finish setup')
-    return cfg
-
-
 def main(args):
-    cfg = setup(args)
+    cfg = get_cfg()
+    cfg.merge_from_file('/volume/configs/config.yaml')
+    cfg.MODEL.DEVICE = "cpu"
+    cfg.OUTPUT_DIR = 'output'
 
+    register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/img/train")
+    register_coco_instances("can_val", {}, "/volume/dataset_val.json", "/volume/img/val")
 
-    register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/img")
-    register_coco_instances("can_val", {}, "/volume/dataset.json", "/volume/img")
-
-    print('init Trainer with config')
-    trainer = Trainer(cfg)
-    trainer.resume_or_load(resume=args.resume)
-    if cfg.TEST.AUG.ENABLED:
-        trainer.register_hooks(
-            [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
-        )
-    # print('start training')
+    trainer = DefaultTrainer(cfg)
+    trainer.resume_or_load(resume=False)
     trainer.train()
-    # print(train_result)
 
-    cfg.MODEL.WEIGHTS = '/output/centermask/CenterMask-V-39-ms-3x/model_final.pth'
-    cfg.dump()
-    print(cfg.dump())
+    cfg.MODEL.WEIGHTS = '/output/model_final.pth'
+
     model = Trainer.build_model(cfg)
-    AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-        cfg.MODEL.WEIGHTS, resume=args.resume
-        # '/output/centermask/CenterMask-V-39-ms-3x/model_final.pth', resume=args.resume
-    )
+    AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=args.resume)
     evaluators = [
         Trainer.build_evaluator(cfg, name)
         for name in cfg.DATASETS.TEST
@@ -222,41 +196,6 @@ def main(args):
         verify_results(cfg, res)
     if cfg.TEST.AUG.ENABLED:
         res.update(Trainer.test_with_TTA(cfg, model))
-    print(res)
-
-
-
-
-
-
-    # if args.eval_only:
-    #     model = Trainer.build_model(cfg)
-    #     AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-    #         cfg.MODEL.WEIGHTS, resume=args.resume
-    #     )
-    #     evaluators = [
-    #         Trainer.build_evaluator(cfg, name)
-    #         for name in cfg.DATASETS.TEST
-    #     ]
-    #     res = Trainer.test(cfg, model, evaluators)
-    #     if comm.is_main_process():
-    #         verify_results(cfg, res)
-    #     if cfg.TEST.AUG.ENABLED:
-    #         res.update(Trainer.test_with_TTA(cfg, model))
-    #     return res
-
-    """
-    If you'd like to do anything fancier than the standard training logic,
-    consider writing your own training loop or subclassing the trainer.
-    """
-    # trainer = Trainer(cfg)
-    # trainer.resume_or_load(resume=args.resume)
-    # if cfg.TEST.AUG.ENABLED:
-    #     trainer.register_hooks(
-    #         [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
-    #     )
-    # return trainer.train()
-
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()

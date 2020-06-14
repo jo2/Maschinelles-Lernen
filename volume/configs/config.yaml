@@ -11,6 +11,10 @@ MODEL:
   ROI_HEADS:
     BATCH_SIZE_PER_IMAGE: 128
     NUM_CLASSES: 3
+  SEM_SEG_HEAD:
+    NUM_CLASSES: 3
+  ROI_KEYPOINT_HEAD:
+    NUM_KEYPOINTS: 17
 DATASETS:
   TRAIN: ("can_train",)
   TEST: ("can_val",)
@@ -19,4 +23,4 @@ SOLVER:
   IMS_PER_BATCH: 1
   BASE_LR: 0.01  # Note that RetinaNet uses a different default learning rate
   STEPS: (6, 8)
-  MAX_ITER: 30
+  MAX_ITER: 10
