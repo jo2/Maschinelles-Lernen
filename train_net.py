@@ -192,14 +192,14 @@ def main(args):
     print(cfg.dump())
     print('end cfg dump')
 
-    model = Trainer.build_model(cfg)
+    model = DefaultTrainer.build_model(cfg)
     AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
     evaluators = [
-        Trainer.build_evaluator(cfg, name)
+        DefaultTrainer.build_evaluator(cfg, name)
         for name in cfg.DATASETS.TEST
     ]
     print('start test')
-    res = Trainer.test(cfg, model, evaluators)
+    res = DefaultTrainer.test(cfg, model, evaluators)
     print('end test')
     if comm.is_main_process():
         verify_results(cfg, res)
