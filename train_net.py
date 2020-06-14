@@ -193,7 +193,7 @@ def main(args):
     print('end cfg dump')
 
     model = Trainer.build_model(cfg)
-    AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=args.resume)
+    AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
     evaluators = [
         Trainer.build_evaluator(cfg, name)
         for name in cfg.DATASETS.TEST
