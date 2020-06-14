@@ -174,16 +174,23 @@ def main(args):
     cfg = get_cfg()
     cfg.merge_from_file('/volume/configs/config.yaml')
     cfg.MODEL.DEVICE = "cpu"
+    os.mkdir('output')
     cfg.OUTPUT_DIR = 'output'
 
-    register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/img/train")
-    register_coco_instances("can_val", {}, "/volume/dataset_val.json", "/volume/img/val")
+    register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/datasets/Can-Check")
+    register_coco_instances("can_val", {}, "/volume/dataset_val.json", "/volume/datasets/Can-Check-Validate")
 
     trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=False)
+    print('start train')
     trainer.train()
+    print('end train')
 
     cfg.MODEL.WEIGHTS = '/output/model_final.pth'
+
+    print('start cfg dump')
+    print(cfg.dump())
+    print('end cfg dump')
 
     model = Trainer.build_model(cfg)
     AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=args.resume)
@@ -191,7 +198,9 @@ def main(args):
         Trainer.build_evaluator(cfg, name)
         for name in cfg.DATASETS.TEST
     ]
+    print('start test')
     res = Trainer.test(cfg, model, evaluators)
+    print('end test')
     if comm.is_main_process():
         verify_results(cfg, res)
     if cfg.TEST.AUG.ENABLED:

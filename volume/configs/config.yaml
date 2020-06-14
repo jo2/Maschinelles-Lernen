@@ -1,10 +1,9 @@
 VERSION: 2
 _BASE_: "centermask_V_39_eSE_FPN_ms_3x.yaml"
+TEST:
+  KEYPOINT_OKS_SIGMAS: 0.42
 MODEL:
   META_ARCHITECTURE: "GeneralizedRCNN"
-#  ROI_KEYPOINT_HEAD:
-#    NUM_KEYPOINTS:
-#  WEIGHTS: "/output/centermask/CenterMask-V-39-ms-3x/model_final.pth"
   DEVICE: "cpu"
   RPN:
     BATCH_SIZE_PER_IMAGE: 256
