@@ -180,6 +180,9 @@ def main(args):
     register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/datasets/Can-Check")
     register_coco_instances("can_val", {}, "/volume/dataset_val.json", "/volume/datasets/Can-Check-Validate")
 
+    MetadataCatalog.get("can_train").thing_classes = ["Edding", "Sticker", "Verschmutzung"]
+    MetadataCatalog.get("can_val").thing_classes = ["Edding", "Sticker", "Verschmutzung"]
+
     trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=False)
     print('start train')
@@ -188,17 +191,47 @@ def main(args):
 
     cfg.MODEL.WEIGHTS = '/output/model_final.pth'
 
-    print('start cfg dump')
-    print(cfg.dump())
-    print('end cfg dump')
+    # print('start cfg dump')
+    # print(cfg.dump())
+    # print('end cfg dump')
 
     model = DefaultTrainer.build_model(cfg)
     AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
-    evaluators = [
-        DefaultTrainer.build_evaluator(cfg, name)
-        for name in cfg.DATASETS.TEST
-    ]
+    evaluators = [COCOEvaluator(test_set, cfg, False) for test_set in cfg.DATASETS.TEST]
+    # evaluators = [
+    #     DefaultTrainer.build_evaluator(cfg, name)
+    #     for name in cfg.DATASETS.TEST
+    # ]
     print('start test')
+    # TODO Fehler -> Nachfragen
+    # Traceback (most recent call last):
+    #   File "train_net.py", line 216, in <module>
+    #     launch(
+    #   File "/usr/local/lib/python3.8/site-packages/detectron2/engine/launch.py", line 52, in launch
+    #     main_func(*args)
+    #   File "train_net.py", line 206, in main
+    #     res = DefaultTrainer.test(cfg, model, evaluators)
+    #   File "/usr/local/lib/python3.8/site-packages/detectron2/engine/defaults.py", line 494, in test
+    #     results_i = inference_on_dataset(model, data_loader, evaluator)
+    #   File "/usr/local/lib/python3.8/site-packages/detectron2/evaluation/evaluator.py", line 123, in inference_on_dataset
+    #     outputs = model(inputs)
+    #   File "/usr/local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 532, in __call__
+    #     result = self.forward(*input, **kwargs)
+    #   File "/usr/local/lib/python3.8/site-packages/detectron2/modeling/meta_arch/rcnn.py", line 108, in forward
+    #     return self.inference(batched_inputs)
+    #   File "/usr/local/lib/python3.8/site-packages/detectron2/modeling/meta_arch/rcnn.py", line 170, in inference
+    #     results, _ = self.roi_heads(images, features, proposals, None)
+    #   File "/usr/local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 532, in __call__
+    #     result = self.forward(*input, **kwargs)
+    #   File "/centermask/modeling/centermask/center_heads.py", line 410, in forward
+    #     pred_instances = self.forward_with_given_boxes(features, proposals)
+    #   File "/centermask/modeling/centermask/center_heads.py", line 437, in forward_with_given_boxes
+    #     instances, mask_features = self._forward_mask(features, instances)
+    #   File "/centermask/modeling/centermask/center_heads.py", line 484, in _forward_mask
+    #     mask_rcnn_inference(mask_logits, instances)
+    #   File "/centermask/modeling/centermask/mask_head.py", line 205, in mask_rcnn_inference
+    #     mask_probs_pred = pred_mask_logits[indices, class_pred][:, None].sigmoid()
+    # IndexError: index 71 is out of bounds for dimension 1 with size 3
     res = DefaultTrainer.test(cfg, model, evaluators)
     print('end test')
     if comm.is_main_process():
