@@ -5,6 +5,8 @@ TEST:
 MODEL:
   META_ARCHITECTURE: "GeneralizedRCNN"
   DEVICE: "cpu"
+  FCOS:
+    NUM_CLASSES: 3
   RETINANET:
     NUM_CLASSES: 3
   RPN:

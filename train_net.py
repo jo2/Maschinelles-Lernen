@@ -2,11 +2,14 @@ import logging
 import os
 from collections import OrderedDict
 import torch
+import random
 from torch.nn.parallel import DistributedDataParallel
+import cv2
 
 import detectron2.utils.comm as comm
-from detectron2.data import MetadataCatalog, build_detection_train_loader
-from detectron2.engine import DefaultTrainer, default_argument_parser, default_setup, hooks, launch
+from detectron2.utils.visualizer import Visualizer, ColorMode
+from detectron2.data import MetadataCatalog, DatasetCatalog, build_detection_train_loader
+from detectron2.engine import DefaultTrainer, DefaultPredictor, default_argument_parser, default_setup, hooks, launch
 from detectron2.utils.events import EventStorage
 from detectron2.evaluation import (
     CityscapesEvaluator,
@@ -203,41 +206,33 @@ def main(args):
     #     for name in cfg.DATASETS.TEST
     # ]
     print('start test')
-    # TODO Fehler -> Nachfragen
-    # Traceback (most recent call last):
-    #   File "train_net.py", line 216, in <module>
-    #     launch(
-    #   File "/usr/local/lib/python3.8/site-packages/detectron2/engine/launch.py", line 52, in launch
-    #     main_func(*args)
-    #   File "train_net.py", line 206, in main
-    #     res = DefaultTrainer.test(cfg, model, evaluators)
-    #   File "/usr/local/lib/python3.8/site-packages/detectron2/engine/defaults.py", line 494, in test
-    #     results_i = inference_on_dataset(model, data_loader, evaluator)
-    #   File "/usr/local/lib/python3.8/site-packages/detectron2/evaluation/evaluator.py", line 123, in inference_on_dataset
-    #     outputs = model(inputs)
-    #   File "/usr/local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 532, in __call__
-    #     result = self.forward(*input, **kwargs)
-    #   File "/usr/local/lib/python3.8/site-packages/detectron2/modeling/meta_arch/rcnn.py", line 108, in forward
-    #     return self.inference(batched_inputs)
-    #   File "/usr/local/lib/python3.8/site-packages/detectron2/modeling/meta_arch/rcnn.py", line 170, in inference
-    #     results, _ = self.roi_heads(images, features, proposals, None)
-    #   File "/usr/local/lib/python3.8/site-packages/torch/nn/modules/module.py", line 532, in __call__
-    #     result = self.forward(*input, **kwargs)
-    #   File "/centermask/modeling/centermask/center_heads.py", line 410, in forward
-    #     pred_instances = self.forward_with_given_boxes(features, proposals)
-    #   File "/centermask/modeling/centermask/center_heads.py", line 437, in forward_with_given_boxes
-    #     instances, mask_features = self._forward_mask(features, instances)
-    #   File "/centermask/modeling/centermask/center_heads.py", line 484, in _forward_mask
-    #     mask_rcnn_inference(mask_logits, instances)
-    #   File "/centermask/modeling/centermask/mask_head.py", line 205, in mask_rcnn_inference
-    #     mask_probs_pred = pred_mask_logits[indices, class_pred][:, None].sigmoid()
-    # IndexError: index 71 is out of bounds for dimension 1 with size 3
     res = DefaultTrainer.test(cfg, model, evaluators)
     print('end test')
-    if comm.is_main_process():
-        verify_results(cfg, res)
-    if cfg.TEST.AUG.ENABLED:
-        res.update(Trainer.test_with_TTA(cfg, model))
+    #if comm.is_main_process():
+    #    verify_results(cfg, res)
+    #if cfg.TEST.AUG.ENABLED:
+    #    res.update(Trainer.test_with_TTA(cfg, model))
+
+    predictor = DefaultPredictor(cfg)
+
+    dataset_val = DatasetCatalog.get("can_val")
+    can_metadata = MetadataCatalog.get("can_val")
+
+    for d in random.sample(dataset_val, 10):
+        print(d["file_name"])
+        img = cv2.imread(d["file_name"])
+        outputs = predictor(img)
+        print(outputs)
+        v = Visualizer(img[:, :, ::-1],
+                       metadata=can_metadata,
+                       scale=0.8,
+                       instance_mode=ColorMode.IMAGE   # remove the colors of unsegmented pixels
+        )
+        v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+        cv2.imwrite("/volume/processed/" + d["file_name"][13:], v.get_image()[:, :, ::-1])
+
+        print('end visualize')
+
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
