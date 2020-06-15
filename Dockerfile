@@ -16,7 +16,7 @@ RUN python -m pip install detectron2==0.1.1 -f https://dl.fbaipublicfiles.com/de
 # Development packages
 RUN pip install flask flask-cors requests opencv-python
 
-#ADD volume /
+ADD volume /volume
 ADD vovnet /vovnet/
 ADD centermask /centermask/
 ADD train_net.py /
