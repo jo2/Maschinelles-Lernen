@@ -21,5 +21,5 @@ ADD vovnet /vovnet/
 ADD centermask /centermask/
 ADD train_net.py /
 
-ENTRYPOINT ["python", "train_net.py"]
+#CMD ["python", "train_net.py"]
 # python train_net.py --eval-only MODEL.WEIGHTS /volume/configs/centermask2-V-39-eSE-FPN-ms-3x.pth
