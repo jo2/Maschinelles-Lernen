@@ -183,8 +183,8 @@ def main(args):
     register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/datasets/Can-Check")
     register_coco_instances("can_val", {}, "/volume/dataset_val.json", "/volume/datasets/Can-Check-Validate")
 
-    MetadataCatalog.get("can_train").thing_classes = ["Edding", "Sticker", "Verschmutzung"]
-    MetadataCatalog.get("can_val").thing_classes = ["Edding", "Sticker", "Verschmutzung"]
+    # MetadataCatalog.get("can_train").thing_classes = ["Edding", "Sticker", "Verschmutzung"]
+    # MetadataCatalog.get("can_val").thing_classes = ["Edding", "Sticker", "Verschmutzung"]
 
     trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=False)
@@ -198,16 +198,16 @@ def main(args):
     # print(cfg.dump())
     # print('end cfg dump')
 
-    model = DefaultTrainer.build_model(cfg)
-    AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
-    evaluators = [COCOEvaluator(test_set, cfg, False) for test_set in cfg.DATASETS.TEST]
+    # model = DefaultTrainer.build_model(cfg)
+    # AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
+    # evaluators = [COCOEvaluator(test_set, cfg, False) for test_set in cfg.DATASETS.TEST]
     # evaluators = [
     #     DefaultTrainer.build_evaluator(cfg, name)
     #     for name in cfg.DATASETS.TEST
     # ]
-    print('start test')
-    res = DefaultTrainer.test(cfg, model, evaluators)
-    print('end test')
+    # print('start test')
+    # res = DefaultTrainer.test(cfg, model, evaluators)
+    # print('end test')
     #if comm.is_main_process():
     #    verify_results(cfg, res)
     #if cfg.TEST.AUG.ENABLED:
@@ -218,20 +218,14 @@ def main(args):
     dataset_val = DatasetCatalog.get("can_val")
     can_metadata = MetadataCatalog.get("can_val")
 
-    for d in random.sample(dataset_val, 10):
-        print(d["file_name"])
+    for d in dataset_val:
+        print(d["file_name"][36:])
         img = cv2.imread(d["file_name"])
         outputs = predictor(img)
-        print(outputs)
-        v = Visualizer(img[:, :, ::-1],
-                       metadata=can_metadata,
-                       scale=0.8,
-                       instance_mode=ColorMode.IMAGE   # remove the colors of unsegmented pixels
-        )
+        v = Visualizer(img[:, :, ::-1], metadata=can_metadata, scale=0.8, instance_mode=ColorMode.IMAGE_BW)
         v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        cv2.imwrite("/volume/processed/" + d["file_name"][13:], v.get_image()[:, :, ::-1])
-
-        print('end visualize')
+        cv2.imwrite("/volume/processed/" + d["file_name"][36:], v.get_image()[:, :, ::-1])
+    print('end visualize')
 
 
 if __name__ == "__main__":
