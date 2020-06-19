@@ -2,9 +2,10 @@ import logging
 import os
 from collections import OrderedDict
 import torch
-import random
 from torch.nn.parallel import DistributedDataParallel
 import cv2
+
+print(torch.cuda.is_available())
 
 import detectron2.utils.comm as comm
 from detectron2.utils.visualizer import Visualizer, ColorMode
@@ -194,11 +195,10 @@ def main(args):
         os.makedirs('/volume/output')
     os.chdir('/')
     clear_folder("/volume/processed")
+    clear_folder("/volume/output")
 
     cfg = get_cfg()
     cfg.merge_from_file('/volume/configs/config.yaml')
-    cfg.MODEL.DEVICE = "cpu"
-    os.mkdir('output')
     cfg.OUTPUT_DIR = 'volume/output'
 
     register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/datasets/Can-Check")
