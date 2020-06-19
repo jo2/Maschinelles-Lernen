@@ -173,45 +173,55 @@ class Trainer(DefaultTrainer):
         res = OrderedDict({k + "_TTA": v for k, v in res.items()})
         return res
 
+def clear_folder(folder):
+    print('folder', folder, 'is not empty. clearing it..')
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
+
 def main(args):
+    if not os.path.exists('/volume/processed'):
+        print('create dir /volume/processed')
+        os.makedirs('/volume/processed')
+    if not os.path.exists('/volume/output'):
+        print('create dir /volume/output')
+        os.makedirs('/volume/output')
+    os.chdir('/')
+    clear_folder("/volume/processed")
+
     cfg = get_cfg()
     cfg.merge_from_file('/volume/configs/config.yaml')
     cfg.MODEL.DEVICE = "cpu"
     os.mkdir('output')
-    cfg.OUTPUT_DIR = 'output'
+    cfg.OUTPUT_DIR = 'volume/output'
 
     register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/datasets/Can-Check")
     register_coco_instances("can_val", {}, "/volume/dataset_val.json", "/volume/datasets/Can-Check-Validate")
 
-    # MetadataCatalog.get("can_train").thing_classes = ["Edding", "Sticker", "Verschmutzung"]
-    # MetadataCatalog.get("can_val").thing_classes = ["Edding", "Sticker", "Verschmutzung"]
-
-    trainer = DefaultTrainer(cfg)
+    # trainer = DefaultTrainer(cfg)
+    trainer = Trainer(cfg)
     trainer.resume_or_load(resume=False)
     print('start train')
     trainer.train()
     print('end train')
 
-    cfg.MODEL.WEIGHTS = '/output/model_final.pth'
+    cfg.MODEL.WEIGHTS = '/volume/output/model_final.pth'
 
-    # print('start cfg dump')
-    # print(cfg.dump())
-    # print('end cfg dump')
-
-    # model = DefaultTrainer.build_model(cfg)
-    # AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
+    model = Trainer.build_model(cfg)
+    AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
     # evaluators = [COCOEvaluator(test_set, cfg, False) for test_set in cfg.DATASETS.TEST]
-    # evaluators = [
-    #     DefaultTrainer.build_evaluator(cfg, name)
-    #     for name in cfg.DATASETS.TEST
-    # ]
-    # print('start test')
-    # res = DefaultTrainer.test(cfg, model, evaluators)
-    # print('end test')
-    #if comm.is_main_process():
-    #    verify_results(cfg, res)
-    #if cfg.TEST.AUG.ENABLED:
-    #    res.update(Trainer.test_with_TTA(cfg, model))
+    evaluators = [
+        Trainer.build_evaluator(cfg, name)
+        for name in cfg.DATASETS.TEST
+    ]
+    res = Trainer.test(cfg, model, evaluators)
+    verify_results(cfg, res)
 
     predictor = DefaultPredictor(cfg)
 

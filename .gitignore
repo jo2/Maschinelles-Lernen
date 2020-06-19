@@ -3,4 +3,6 @@ venv\
 
 volume/datasets/Can-Check/
 volume/datasets/Can-Check-Validate/
+volume/output/
+volume/processed/
 
