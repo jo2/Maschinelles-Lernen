@@ -187,22 +187,23 @@ def clear_folder(folder):
             print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 def main(args):
-    if not os.path.exists('/volume/processed'):
-        print('create dir /volume/processed')
-        os.makedirs('/volume/processed')
-    if not os.path.exists('/volume/output'):
-        print('create dir /volume/output')
-        os.makedirs('/volume/output')
+    if not os.path.exists('/home/user32/volume/processed'):
+        print('create dir /home/user32/volume/processed')
+        os.makedirs('/home/user32/volume/processed')
+    if not os.path.exists('/home/user32/volume/output'):
+        print('create dir /home/user32/volume/output')
+        os.makedirs('/home/user32/volume/output')
     os.chdir('/')
-    clear_folder("/volume/processed")
-    clear_folder("/volume/output")
+    clear_folder("/home/user32/volume/processed")
+    clear_folder("/home/user32/volume/output")
 
     cfg = get_cfg()
-    cfg.merge_from_file('/volume/configs/config.yaml')
-    cfg.OUTPUT_DIR = 'volume/output'
+    cfg.merge_from_file('/home/user32/volume/configs/config.yaml')
+    cfg.OUTPUT_DIR = 'home/user32/volume/output'
+    print(cfg.dump())
 
-    register_coco_instances("can_train", {}, "/volume/dataset.json", "/volume/datasets/Can-Check")
-    register_coco_instances("can_val", {}, "/volume/dataset_val.json", "/volume/datasets/Can-Check-Validate")
+    register_coco_instances("can_train", {}, "/home/user32/volume/dataset.json", "/home/user32/volume/datasets/Can-Check")
+    register_coco_instances("can_val", {}, "/home/user32/volume/dataset_val.json", "/home/user32/volume/datasets/Can-Check-Validate")
 
     # trainer = DefaultTrainer(cfg)
     trainer = Trainer(cfg)
@@ -211,7 +212,7 @@ def main(args):
     trainer.train()
     print('end train')
 
-    cfg.MODEL.WEIGHTS = '/volume/output/model_final.pth'
+    cfg.MODEL.WEIGHTS = '/home/user32/volume/output/model_final.pth'
 
     model = Trainer.build_model(cfg)
     AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
@@ -233,8 +234,8 @@ def main(args):
         img = cv2.imread(d["file_name"])
         outputs = predictor(img)
         v = Visualizer(img[:, :, ::-1], metadata=can_metadata, scale=0.8, instance_mode=ColorMode.IMAGE_BW)
-        v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        cv2.imwrite("/volume/processed/" + d["file_name"][36:], v.get_image()[:, :, ::-1])
+        v = v.draw_instance_predictions(outputs["instances"].to("cuda"))
+        cv2.imwrite("/home/user32/volume/processed/" + d["file_name"][36:], v.get_image()[:, :, ::-1])
     print('end visualize')
 
 

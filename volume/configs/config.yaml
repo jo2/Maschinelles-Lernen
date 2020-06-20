@@ -4,7 +4,7 @@ TEST:
   KEYPOINT_OKS_SIGMAS: []
 MODEL:
   META_ARCHITECTURE: "GeneralizedRCNN"
-  DEVICE: "gpu"
+  DEVICE: "cuda"
   FCOS:
     NUM_CLASSES: 3
   RETINANET:
