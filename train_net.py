@@ -1,5 +1,5 @@
 import logging
-import os
+import os, shutil
 from collections import OrderedDict
 import torch
 from torch.nn.parallel import DistributedDataParallel
@@ -200,7 +200,7 @@ def main(args):
     cfg = get_cfg()
     cfg.merge_from_file('/home/user32/volume/configs/config.yaml')
     cfg.OUTPUT_DIR = 'home/user32/volume/output'
-    print(cfg.dump())
+    # print(cfg.dump())
 
     register_coco_instances("can_train", {}, "/home/user32/volume/dataset.json", "/home/user32/volume/datasets/Can-Check")
     register_coco_instances("can_val", {}, "/home/user32/volume/dataset_val.json", "/home/user32/volume/datasets/Can-Check-Validate")
@@ -230,12 +230,12 @@ def main(args):
     can_metadata = MetadataCatalog.get("can_val")
 
     for d in dataset_val:
-        print(d["file_name"][36:])
+        print(d["file_name"][48:])
         img = cv2.imread(d["file_name"])
         outputs = predictor(img)
         v = Visualizer(img[:, :, ::-1], metadata=can_metadata, scale=0.8, instance_mode=ColorMode.IMAGE_BW)
-        v = v.draw_instance_predictions(outputs["instances"].to("cuda"))
-        cv2.imwrite("/home/user32/volume/processed/" + d["file_name"][36:], v.get_image()[:, :, ::-1])
+        v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+        cv2.imwrite("/home/user32/volume/processed/" + d["file_name"][48:], v.get_image()[:, :, ::-1])
     print('end visualize')
 
 
