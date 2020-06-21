@@ -5,8 +5,6 @@ import torch
 from torch.nn.parallel import DistributedDataParallel
 import cv2
 
-print(torch.cuda.is_available())
-
 import detectron2.utils.comm as comm
 from detectron2.utils.visualizer import Visualizer, ColorMode
 from detectron2.data import MetadataCatalog, DatasetCatalog, build_detection_train_loader
@@ -28,6 +26,7 @@ from detectron2.data.datasets import register_coco_instances
 from detectron2.data.dataset_mapper import DatasetMapper
 from centermask.config import get_cfg
 from centermask.checkpoint import AdetCheckpointer
+import datetime
 
 
 class Trainer(DefaultTrainer):
@@ -205,18 +204,23 @@ def main(args):
     register_coco_instances("can_train", {}, "/home/user32/volume/dataset.json", "/home/user32/volume/datasets/Can-Check")
     register_coco_instances("can_val", {}, "/home/user32/volume/dataset_val.json", "/home/user32/volume/datasets/Can-Check-Validate")
 
-    # trainer = DefaultTrainer(cfg)
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=False)
-    print('start train')
+    start = datetime.datetime.now().astimezone()
+    print(start.strftime('start training: %Y-%m-%d %H:%M:%S'))
     trainer.train()
-    print('end train')
+    end = datetime.datetime.now().astimezone()
+    print(end.strftime('end training: %Y-%m-%d %H:%M:%S'))
+
+    elapsed = end - start
+    min, secs = divmod(elapsed.days * 86400 + elapsed.seconds, 60)
+    hour, minutes = divmod(min, 60)
+    print('training duration: %.2d:%.2d:%.2d' % (hour, minutes, secs))
 
     cfg.MODEL.WEIGHTS = '/home/user32/volume/output/model_final.pth'
 
     model = Trainer.build_model(cfg)
     AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
-    # evaluators = [COCOEvaluator(test_set, cfg, False) for test_set in cfg.DATASETS.TEST]
     evaluators = [
         Trainer.build_evaluator(cfg, name)
         for name in cfg.DATASETS.TEST
@@ -237,7 +241,6 @@ def main(args):
         v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
         cv2.imwrite("/home/user32/volume/processed/" + d["file_name"][48:], v.get_image()[:, :, ::-1])
     print('end visualize')
-
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
