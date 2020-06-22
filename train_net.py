@@ -204,20 +204,13 @@ def main(args):
     register_coco_instances("can_train", {}, "/home/user32/volume/dataset.json", "/home/user32/volume/datasets/Can-Check")
     register_coco_instances("can_val", {}, "/home/user32/volume/dataset_val.json", "/home/user32/volume/datasets/Can-Check-Validate")
 
+    cfg.MODEL.WEIGHTS = '/home/user32/volume/model_final.pth'
+
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=False)
     start = datetime.datetime.now().astimezone()
     print(start.strftime('start training: %Y-%m-%d %H:%M:%S'))
     trainer.train()
-    end = datetime.datetime.now().astimezone()
-    print(end.strftime('end training: %Y-%m-%d %H:%M:%S'))
-
-    elapsed = end - start
-    min, secs = divmod(elapsed.days * 86400 + elapsed.seconds, 60)
-    hour, minutes = divmod(min, 60)
-    print('training duration: %.2d:%.2d:%.2d' % (hour, minutes, secs))
-
-    cfg.MODEL.WEIGHTS = '/home/user32/volume/output/model_final.pth'
 
     model = Trainer.build_model(cfg)
     AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(cfg.MODEL.WEIGHTS, resume=False)
@@ -227,6 +220,13 @@ def main(args):
     ]
     res = Trainer.test(cfg, model, evaluators)
     verify_results(cfg, res)
+
+    end = datetime.datetime.now().astimezone()
+    print(end.strftime('end training: %Y-%m-%d %H:%M:%S'))
+    elapsed = end - start
+    min, secs = divmod(elapsed.days * 86400 + elapsed.seconds, 60)
+    hour, minutes = divmod(min, 60)
+    print('training duration: %.2d:%.2d:%.2d' % (hour, minutes, secs))
 
     predictor = DefaultPredictor(cfg)
 
