@@ -7,7 +7,7 @@ RUN apt-get -y install nano git build-essential libglib2.0-0 libsm6 libxext6 lib
 
 # Detectron2 prerequisites
 RUN pip3 install torch==1.4.0+cu100 torchvision==0.5.0+cu100 -f https://download.pytorch.org/whl/torch_stable.html
-RUN pip3 install cython
+RUN pip3 install cython shapely
 RUN pip3 install -U 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
 
 RUN pip3 --version
